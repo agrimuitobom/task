@@ -1,0 +1,326 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2em;
+    font-weight: 600;
+}
+
+.tabs {
+    display: flex;
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    background: #e8e8e8;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #667eea;
+    border-bottom: 3px solid #667eea;
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+    flex: 1;
+    min-width: 150px;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.task-list {
+    list-style: none;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.3s;
+}
+
+.task-item:hover {
+    background: #f0f0f0;
+    transform: translateX(5px);
+}
+
+.task-item.completed {
+    opacity: 0.6;
+}
+
+.task-item.completed .task-text {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.task-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.task-text {
+    flex: 1;
+    font-size: 16px;
+    color: #333;
+}
+
+.delete-btn {
+    padding: 6px 12px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.3s;
+}
+
+.delete-btn:hover {
+    background: #ff3838;
+}
+
+.day-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.day-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.day-btn:hover {
+    border-color: #667eea;
+}
+
+.day-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+#timetable-display {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.period-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border-left: 4px solid #667eea;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.period-number {
+    font-weight: bold;
+    color: #667eea;
+    margin-right: 15px;
+    min-width: 80px;
+}
+
+.subject-name {
+    flex: 1;
+    font-size: 16px;
+    color: #333;
+}
+
+.homework-item {
+    background: #f9f9f9;
+    border-left: 4px solid #764ba2;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+}
+
+.homework-item:hover {
+    background: #f0f0f0;
+    transform: translateX(5px);
+}
+
+.homework-subject {
+    font-weight: bold;
+    color: #764ba2;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.homework-content {
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.homework-deadline {
+    color: #ff4757;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.homework-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.complete-btn {
+    padding: 6px 12px;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.3s;
+}
+
+.complete-btn:hover {
+    background: #27ae60;
+}
+
+.homework-item.completed {
+    opacity: 0.6;
+    background: #e8f5e9;
+}
+
+.homework-item.completed .homework-subject,
+.homework-item.completed .homework-content {
+    text-decoration: line-through;
+}
+
+@media (max-width: 600px) {
+    .input-group {
+        flex-direction: column;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+        width: 100%;
+    }
+
+    .day-selector {
+        flex-wrap: wrap;
+    }
+
+    .day-btn {
+        min-width: calc(50% - 5px);
+    }
+}

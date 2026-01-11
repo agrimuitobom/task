@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生タスク管理アプリ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 学生タスク管理</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="todo">やるべきこと</button>
+            <button class="tab-btn" data-tab="timetable">時間割</button>
+            <button class="tab-btn" data-tab="homework">宿題</button>
+        </div>
+
+        <!-- やるべきことタブ -->
+        <div id="todo" class="tab-content active">
+            <div class="section">
+                <h2>やるべきことリスト</h2>
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="新しいタスクを入力...">
+                    <button id="add-todo-btn" class="btn-primary">追加</button>
+                </div>
+                <ul id="todo-list" class="task-list"></ul>
+            </div>
+        </div>
+
+        <!-- 時間割タブ -->
+        <div id="timetable" class="tab-content">
+            <div class="section">
+                <h2>時間割</h2>
+                <div class="day-selector">
+                    <button class="day-btn active" data-day="月">月</button>
+                    <button class="day-btn" data-day="火">火</button>
+                    <button class="day-btn" data-day="水">水</button>
+                    <button class="day-btn" data-day="木">木</button>
+                    <button class="day-btn" data-day="金">金</button>
+                </div>
+                <div class="input-group">
+                    <select id="period-select">
+                        <option value="1">1時間目</option>
+                        <option value="2">2時間目</option>
+                        <option value="3">3時間目</option>
+                        <option value="4">4時間目</option>
+                        <option value="5">5時間目</option>
+                        <option value="6">6時間目</option>
+                    </select>
+                    <input type="text" id="subject-input" placeholder="科目名...">
+                    <button id="add-subject-btn" class="btn-primary">追加</button>
+                </div>
+                <div id="timetable-display"></div>
+            </div>
+        </div>
+
+        <!-- 宿題タブ -->
+        <div id="homework" class="tab-content">
+            <div class="section">
+                <h2>科目ごとの宿題</h2>
+                <div class="input-group">
+                    <input type="text" id="hw-subject-input" placeholder="科目名...">
+                    <input type="text" id="hw-content-input" placeholder="宿題の内容...">
+                    <input type="date" id="hw-deadline-input">
+                    <button id="add-homework-btn" class="btn-primary">追加</button>
+                </div>
+                <div id="homework-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
