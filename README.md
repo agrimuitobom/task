@@ -31,11 +31,66 @@
 - 完了/未完了の管理
 - 期限順に自動ソート
 
-## 使い方
+## セットアップ
+
+### 1. Firebaseプロジェクトの作成
+
+1. [Firebase Console](https://console.firebase.google.com/) にアクセス
+2. 「プロジェクトを追加」をクリック
+3. プロジェクト名を入力して作成
+
+### 2. Firebase Authenticationの設定
+
+1. Firebase Consoleで「Authentication」を選択
+2. 「Sign-in method」タブを開く
+3. 「Google」を有効化
+
+### 3. Cloud Firestoreの設定
+
+1. Firebase Consoleで「Firestore Database」を選択
+2. 「データベースの作成」をクリック
+3. 「テストモードで開始」を選択（後で本番モードに変更可能）
+4. ロケーションを選択（asia-northeast1推奨）
+
+### 4. Firebase設定情報の取得
+
+1. Firebase Consoleで歯車アイコン → 「プロジェクトの設定」
+2. 「マイアプリ」セクションで「ウェブアプリ」を追加
+3. 表示される設定情報（firebaseConfig）をコピー
+
+### 5. アプリケーションの設定
+
+1. `firebase-config.js` を開く
+2. 取得した設定情報を貼り付ける
+
+```javascript
+const firebaseConfig = {
+    apiKey: "あなたのAPIキー",
+    authDomain: "あなたのプロジェクトID.firebaseapp.com",
+    projectId: "あなたのプロジェクトID",
+    storageBucket: "あなたのプロジェクトID.appspot.com",
+    messagingSenderId: "あなたのメッセージング送信者ID",
+    appId: "あなたのアプリID"
+};
+```
+
+### 6. アプリケーションの起動
 
 1. `index.html` をブラウザで開く
-2. 上部のタブで機能を切り替え
-3. データは自動的にブラウザに保存されます（LocalStorage使用）
+2. Googleアカウントでログイン
+3. データは自動的にFirestoreに保存されます
+
+## 使い方
+
+### ログイン
+1. アプリを開くとログイン画面が表示されます
+2. 「Googleでログイン」ボタンをクリック
+3. Googleアカウントを選択してログイン
+
+### データ管理
+- すべてのデータはユーザーごとにFirestoreに保存されます
+- どのデバイスからログインしても同じデータにアクセスできます
+- ログアウトするには、ヘッダーの「ログアウト」ボタンをクリック
 
 ### やるべきことリストの使い方
 1. テキスト欄にタスクを入力
@@ -69,7 +124,8 @@
 - HTML5
 - CSS3
 - Vanilla JavaScript
-- LocalStorage（データ永続化）
+- Firebase Authentication（Googleログイン）
+- Cloud Firestore（データ永続化）
 
 ## ブラウザ対応
 
@@ -77,4 +133,18 @@
 
 ## データの保存
 
-すべてのデータはブラウザのLocalStorageに保存されるため、ブラウザのキャッシュをクリアするとデータが失われます。
+- すべてのデータはCloud Firestoreに保存されます
+- ユーザーごとに独立したデータベースが管理されます
+- データ構造：
+  ```
+  users/{userId}/data/
+    ├─ todos (やるべきことリスト)
+    ├─ timetable (時間割)
+    └─ homework (宿題)
+  ```
+
+## セキュリティ
+
+- Firebase Authenticationによる認証
+- ユーザーごとにデータが分離されているため、他のユーザーのデータは閲覧・編集できません
+- 本番環境では、Firestoreのセキュリティルールを適切に設定してください

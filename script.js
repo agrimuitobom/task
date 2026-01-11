@@ -1,23 +1,25 @@
 // データ構造
-let todos = JSON.parse(localStorage.getItem('todos')) || [];
-let timetable = JSON.parse(localStorage.getItem('timetable')) || {
+let todos = [];
+let timetable = {
     '月': {},
     '火': {},
     '水': {},
     '木': {},
     '金': {}
 };
-let homework = JSON.parse(localStorage.getItem('homework')) || [];
+let homework = [];
 let currentDay = '月';
 
-// 初期化
-document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
-    initTodoList();
-    initTimetable();
-    initHomework();
-    initCalendar();
-});
+// 初期化（auth.jsから呼ばれる）
+function initApp() {
+    loadAllData().then(() => {
+        initTabs();
+        initTodoList();
+        initTimetable();
+        initHomework();
+        initCalendar();
+    });
+}
 
 // タブ切り替え
 function initTabs() {
@@ -160,10 +162,6 @@ function renderTodos() {
     });
 }
 
-function saveTodos() {
-    localStorage.setItem('todos', JSON.stringify(todos));
-}
-
 // ========== 時間割 ==========
 function initTimetable() {
     const dayBtns = document.querySelectorAll('.day-btn');
@@ -235,11 +233,6 @@ function renderTimetable() {
         `;
         timetableDisplay.appendChild(div);
     });
-}
-
-function saveTimetable() {
-    localStorage.setItem('timetable', JSON.stringify(timetable));
-    updateSubjectDropdown(); // 科目リストを更新
 }
 
 // 時間割から科目リストを取得
@@ -388,10 +381,6 @@ function renderHomework() {
 
         homeworkList.appendChild(div);
     });
-}
-
-function saveHomework() {
-    localStorage.setItem('homework', JSON.stringify(homework));
 }
 
 // ========== カレンダー ==========
@@ -571,6 +560,90 @@ function renderCalendarForDate(date) {
 
     html += '</div>';
     calendarView.innerHTML = html;
+}
+
+// ========== Firestore データ管理 ==========
+
+// すべてのデータを読み込む
+async function loadAllData() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+        // Todosを読み込む
+        const todosDoc = await db.collection('users').doc(userId).collection('data').doc('todos').get();
+        if (todosDoc.exists) {
+            todos = todosDoc.data().items || [];
+        }
+
+        // Timetableを読み込む
+        const timetableDoc = await db.collection('users').doc(userId).collection('data').doc('timetable').get();
+        if (timetableDoc.exists) {
+            timetable = timetableDoc.data().schedule || {
+                '月': {},
+                '火': {},
+                '水': {},
+                '木': {},
+                '金': {}
+            };
+        }
+
+        // Homeworkを読み込む
+        const homeworkDoc = await db.collection('users').doc(userId).collection('data').doc('homework').get();
+        if (homeworkDoc.exists) {
+            homework = homeworkDoc.data().items || [];
+        }
+
+        console.log('データ読み込み完了');
+    } catch (error) {
+        console.error('データ読み込みエラー:', error);
+    }
+}
+
+// Todosを保存
+async function saveTodos() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+        await db.collection('users').doc(userId).collection('data').doc('todos').set({
+            items: todos,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Todos保存エラー:', error);
+    }
+}
+
+// Timetableを保存
+async function saveTimetable() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+        await db.collection('users').doc(userId).collection('data').doc('timetable').set({
+            schedule: timetable,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        updateSubjectDropdown();
+    } catch (error) {
+        console.error('Timetable保存エラー:', error);
+    }
+}
+
+// Homeworkを保存
+async function saveHomework() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+        await db.collection('users').doc(userId).collection('data').doc('homework').set({
+            items: homework,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Homework保存エラー:', error);
+    }
 }
 
 // ユーティリティ関数
