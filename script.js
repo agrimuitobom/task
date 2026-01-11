@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTodoList();
     initTimetable();
     initHomework();
+    initCalendar();
 });
 
 // タブ切り替え
@@ -32,6 +33,15 @@ function initTabs() {
 
             btn.classList.add('active');
             document.getElementById(targetTab).classList.add('active');
+
+            // カレンダータブに切り替えた時は再描画
+            if (targetTab === 'calendar') {
+                renderCalendar();
+            }
+            // 宿題タブに切り替えた時は科目リストを更新
+            if (targetTab === 'homework') {
+                updateSubjectDropdown();
+            }
         });
     });
 }
@@ -51,7 +61,9 @@ function initTodoList() {
 
 function addTodo() {
     const todoInput = document.getElementById('todo-input');
+    const todoDateInput = document.getElementById('todo-date-input');
     const text = todoInput.value.trim();
+    const date = todoDateInput.value;
 
     if (text === '') {
         alert('タスクを入力してください');
@@ -61,6 +73,7 @@ function addTodo() {
     const todo = {
         id: Date.now(),
         text: text,
+        date: date,
         completed: false,
         createdAt: new Date().toISOString()
     };
@@ -69,6 +82,7 @@ function addTodo() {
     saveTodos();
     renderTodos();
     todoInput.value = '';
+    todoDateInput.value = '';
 }
 
 function toggleTodo(id) {
@@ -97,13 +111,48 @@ function renderTodos() {
         return;
     }
 
-    todos.forEach(todo => {
+    // 日付順にソート（完了したものは後ろへ）
+    const sortedTodos = [...todos].sort((a, b) => {
+        if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+        }
+        if (a.date && b.date) {
+            return new Date(a.date) - new Date(b.date);
+        }
+        if (a.date && !b.date) return -1;
+        if (!a.date && b.date) return 1;
+        return 0;
+    });
+
+    sortedTodos.forEach(todo => {
         const li = document.createElement('li');
         li.className = `task-item ${todo.completed ? 'completed' : ''}`;
 
+        let dateText = '';
+        if (todo.date) {
+            const todoDate = new Date(todo.date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffTime = todoDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                dateText = `<span class="task-date overdue">${todo.date} (期限切れ)</span>`;
+            } else if (diffDays === 0) {
+                dateText = `<span class="task-date today">${todo.date} (今日!)</span>`;
+            } else if (diffDays === 1) {
+                dateText = `<span class="task-date tomorrow">${todo.date} (明日)</span>`;
+            } else {
+                dateText = `<span class="task-date">${todo.date} (あと${diffDays}日)</span>`;
+            }
+        }
+
         li.innerHTML = `
             <input type="checkbox" class="task-checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleTodo(${todo.id})">
-            <span class="task-text">${escapeHtml(todo.text)}</span>
+            <div class="task-content">
+                <span class="task-text">${escapeHtml(todo.text)}</span>
+                ${dateText}
+            </div>
             <button class="delete-btn" onclick="deleteTodo(${todo.id})">削除</button>
         `;
 
@@ -190,12 +239,46 @@ function renderTimetable() {
 
 function saveTimetable() {
     localStorage.setItem('timetable', JSON.stringify(timetable));
+    updateSubjectDropdown(); // 科目リストを更新
+}
+
+// 時間割から科目リストを取得
+function getAllSubjects() {
+    const subjects = new Set();
+    Object.values(timetable).forEach(daySchedule => {
+        Object.values(daySchedule).forEach(subject => {
+            subjects.add(subject);
+        });
+    });
+    return Array.from(subjects).sort();
+}
+
+// 宿題の科目プルダウンを更新
+function updateSubjectDropdown() {
+    const subjectSelect = document.getElementById('hw-subject-input');
+    const currentValue = subjectSelect.value;
+    const subjects = getAllSubjects();
+
+    subjectSelect.innerHTML = '<option value="">科目を選択...</option>';
+
+    subjects.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        subjectSelect.appendChild(option);
+    });
+
+    // 以前選択していた値があれば復元
+    if (currentValue && subjects.includes(currentValue)) {
+        subjectSelect.value = currentValue;
+    }
 }
 
 // ========== 宿題管理 ==========
 function initHomework() {
     const addHomeworkBtn = document.getElementById('add-homework-btn');
     addHomeworkBtn.addEventListener('click', addHomework);
+    updateSubjectDropdown(); // 初期化時に科目リストを読み込む
     renderHomework();
 }
 
@@ -204,12 +287,12 @@ function addHomework() {
     const contentInput = document.getElementById('hw-content-input');
     const deadlineInput = document.getElementById('hw-deadline-input');
 
-    const subject = subjectInput.value.trim();
+    const subject = subjectInput.value;
     const content = contentInput.value.trim();
     const deadline = deadlineInput.value;
 
     if (subject === '' || content === '') {
-        alert('科目名と宿題の内容を入力してください');
+        alert('科目と宿題の内容を入力してください');
         return;
     }
 
@@ -309,6 +392,185 @@ function renderHomework() {
 
 function saveHomework() {
     localStorage.setItem('homework', JSON.stringify(homework));
+}
+
+// ========== カレンダー ==========
+function initCalendar() {
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const calendarView = document.getElementById('calendar-view');
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    // カレンダーヘッダー
+    const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀</button>
+            <h3>${year}年 ${monthNames[month]}</h3>
+            <button class="calendar-nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+    `;
+
+    // 曜日ヘッダー
+    html += '<div class="calendar-grid">';
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    dayNames.forEach(day => {
+        html += `<div class="calendar-day-header">${day}</div>`;
+    });
+
+    // カレンダー日付
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // 空のセル
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-cell empty"></div>';
+    }
+
+    // 日付セル
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = dateStr === today.toISOString().split('T')[0];
+
+        // この日のタスクと宿題を取得
+        const dayTodos = todos.filter(t => t.date === dateStr && !t.completed);
+        const dayHomework = homework.filter(h => h.deadline === dateStr && !h.completed);
+
+        let cellClass = 'calendar-cell';
+        if (isToday) cellClass += ' today';
+        if (dayTodos.length > 0 || dayHomework.length > 0) cellClass += ' has-tasks';
+
+        html += `<div class="${cellClass}">
+            <div class="calendar-date">${day}</div>`;
+
+        if (dayTodos.length > 0) {
+            html += `<div class="calendar-task-count">📝 ${dayTodos.length}</div>`;
+        }
+        if (dayHomework.length > 0) {
+            html += `<div class="calendar-hw-count">📚 ${dayHomework.length}</div>`;
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+
+    // タスク・宿題一覧（今日から7日間）
+    html += '<div class="upcoming-section"><h3>今後の予定</h3>';
+
+    const upcomingDays = 7;
+    let hasUpcoming = false;
+
+    for (let i = 0; i < upcomingDays; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const dayTodos = todos.filter(t => t.date === dateStr && !t.completed);
+        const dayHomework = homework.filter(h => h.deadline === dateStr && !h.completed);
+
+        if (dayTodos.length > 0 || dayHomework.length > 0) {
+            hasUpcoming = true;
+            const dayLabel = i === 0 ? '今日' : i === 1 ? '明日' : `${i}日後`;
+            html += `<div class="upcoming-day">
+                <h4>${dateStr} (${dayLabel})</h4>`;
+
+            dayTodos.forEach(todo => {
+                html += `<div class="upcoming-item todo-item">📝 ${escapeHtml(todo.text)}</div>`;
+            });
+
+            dayHomework.forEach(hw => {
+                html += `<div class="upcoming-item hw-item">📚 ${escapeHtml(hw.subject)}: ${escapeHtml(hw.content)}</div>`;
+            });
+
+            html += '</div>';
+        }
+    }
+
+    if (!hasUpcoming) {
+        html += '<p style="text-align: center; color: #999; padding: 20px;">今後の予定はありません</p>';
+    }
+
+    html += '</div>';
+
+    calendarView.innerHTML = html;
+}
+
+let currentCalendarDate = new Date();
+
+function changeMonth(delta) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    renderCalendarForDate(currentCalendarDate);
+}
+
+function renderCalendarForDate(date) {
+    const calendarView = document.getElementById('calendar-view');
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // カレンダーヘッダー
+    const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="changeMonth(-1)">◀</button>
+            <h3>${year}年 ${monthNames[month]}</h3>
+            <button class="calendar-nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+    `;
+
+    // 曜日ヘッダー
+    html += '<div class="calendar-grid">';
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    dayNames.forEach(day => {
+        html += `<div class="calendar-day-header">${day}</div>`;
+    });
+
+    // カレンダー日付
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // 空のセル
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-cell empty"></div>';
+    }
+
+    // 日付セル
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isToday = cellDate.getTime() === today.getTime();
+
+        // この日のタスクと宿題を取得
+        const dayTodos = todos.filter(t => t.date === dateStr && !t.completed);
+        const dayHomework = homework.filter(h => h.deadline === dateStr && !h.completed);
+
+        let cellClass = 'calendar-cell';
+        if (isToday) cellClass += ' today';
+        if (dayTodos.length > 0 || dayHomework.length > 0) cellClass += ' has-tasks';
+
+        html += `<div class="${cellClass}">
+            <div class="calendar-date">${day}</div>`;
+
+        if (dayTodos.length > 0) {
+            html += `<div class="calendar-task-count">📝 ${dayTodos.length}</div>`;
+        }
+        if (dayHomework.length > 0) {
+            html += `<div class="calendar-hw-count">📚 ${dayHomework.length}</div>`;
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+    calendarView.innerHTML = html;
 }
 
 // ユーティリティ関数
