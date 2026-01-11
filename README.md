@@ -74,11 +74,48 @@ const firebaseConfig = {
 };
 ```
 
-### 6. アプリケーションの起動
+### 6. Firebase Hostingの設定
 
-1. `index.html` をブラウザで開く
-2. Googleアカウントでログイン
-3. データは自動的にFirestoreに保存されます
+1. `.firebaserc` を開く
+2. `YOUR_PROJECT_ID` を自分のFirebaseプロジェクトIDに置き換える
+
+```json
+{
+  "projects": {
+    "default": "your-actual-project-id"
+  }
+}
+```
+
+### 7. Firebase CLIのインストール（初回のみ）
+
+```bash
+npm install -g firebase-tools
+```
+
+### 8. Firebaseにログイン
+
+```bash
+firebase login
+```
+
+### 9. アプリケーションのデプロイ
+
+```bash
+firebase deploy
+```
+
+デプロイが完了すると、`https://your-project-id.web.app` のようなURLが表示されます。
+
+### ローカルでの動作確認（オプション）
+
+デプロイ前にローカルで確認したい場合：
+
+```bash
+firebase serve
+```
+
+ブラウザで `http://localhost:5000` を開いて確認できます。
 
 ## 使い方
 
@@ -119,6 +156,15 @@ const firebaseConfig = {
 4. 「追加」ボタンをクリック
 5. 完了したら「完了」ボタンをクリック
 
+## Firebase Hostingのメリット
+
+- **HTTPS対応の公開URL**: `https://your-app.web.app` で世界中からアクセス可能
+- **どこからでもアクセス**: スマホ、タブレット、PCどのデバイスからでもOK
+- **無料**: 月10GBまで無料（個人利用には十分）
+- **簡単デプロイ**: `firebase deploy` コマンド一発
+- **高速CDN**: Googleのグローバルネットワークで高速配信
+- **URLの共有**: 友達や他の生徒にURLを共有するだけで使ってもらえる
+
 ## 技術仕様
 
 - HTML5
@@ -126,6 +172,7 @@ const firebaseConfig = {
 - Vanilla JavaScript
 - Firebase Authentication（Googleログイン）
 - Cloud Firestore（データ永続化）
+- Firebase Hosting（Webホスティング）
 
 ## ブラウザ対応
 
