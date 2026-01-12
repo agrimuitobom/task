@@ -44,6 +44,9 @@
 1. Firebase Consoleで「Authentication」を選択
 2. 「Sign-in method」タブを開く
 3. 「Google」を有効化
+4. **重要**: 「設定」タブで「承認済みドメイン」に以下を追加：
+   - `task-sainou.web.app`
+   - `task-sainou.firebaseapp.com`
 
 ### 3. Cloud Firestoreの設定
 
@@ -101,11 +104,15 @@ firebase login
 
 ### 9. アプリケーションのデプロイ
 
+**重要**: デプロイは**あなたのローカル環境（パソコン）**で行ってください。
+
 ```bash
 firebase deploy
 ```
 
-デプロイが完了すると、`https://your-project-id.web.app` のようなURLが表示されます。
+デプロイが完了すると、`https://task-sainou.web.app` でアプリにアクセスできます。
+
+詳しいデプロイ手順は [DEPLOY.md](DEPLOY.md) を参照してください。
 
 ### ローカルでの動作確認（オプション）
 
