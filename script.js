@@ -18,6 +18,7 @@ function initApp() {
         initTimetable();
         initHomework();
         initCalendar();
+        initSettings();
     });
 }
 
@@ -643,6 +644,142 @@ async function saveHomework() {
         });
     } catch (error) {
         console.error('Homework保存エラー:', error);
+    }
+}
+
+// ========== 設定 ==========
+function initSettings() {
+    loadNotificationSettings();
+
+    // LINE トークン保存
+    document.getElementById('save-line-token-btn').addEventListener('click', saveLineToken);
+
+    // 通知設定保存
+    document.getElementById('save-notify-settings-btn').addEventListener('click', saveNotifySettings);
+
+    // テスト通知
+    document.getElementById('test-notification-btn').addEventListener('click', sendTestNotification);
+}
+
+// 通知設定を読み込む
+async function loadNotificationSettings() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    try {
+        const settingsDoc = await db
+            .collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('notifications')
+            .get();
+
+        if (settingsDoc.exists) {
+            const settings = settingsDoc.data();
+
+            // トークンは表示しない（セキュリティ上）
+            if (settings.lineToken) {
+                document.getElementById('line-token-input').placeholder = '設定済み';
+            }
+
+            // 通知タイミング
+            const notifyDays = settings.notifyDays || [0, 1, 7];
+            document.getElementById('notify-today').checked = notifyDays.includes(0);
+            document.getElementById('notify-tomorrow').checked = notifyDays.includes(1);
+            document.getElementById('notify-week').checked = notifyDays.includes(7);
+        }
+    } catch (error) {
+        console.error('設定読み込みエラー:', error);
+    }
+}
+
+// LINE トークンを保存
+async function saveLineToken() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    const token = document.getElementById('line-token-input').value.trim();
+
+    if (!token) {
+        alert('トークンを入力してください');
+        return;
+    }
+
+    try {
+        await db
+            .collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('notifications')
+            .set(
+                {
+                    lineToken: token,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                },
+                { merge: true }
+            );
+
+        alert('LINE Notifyトークンを保存しました！');
+        document.getElementById('line-token-input').value = '';
+        document.getElementById('line-token-input').placeholder = '設定済み';
+    } catch (error) {
+        console.error('トークン保存エラー:', error);
+        alert('保存に失敗しました: ' + error.message);
+    }
+}
+
+// 通知設定を保存
+async function saveNotifySettings() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    const notifyDays = [];
+    if (document.getElementById('notify-today').checked) notifyDays.push(0);
+    if (document.getElementById('notify-tomorrow').checked) notifyDays.push(1);
+    if (document.getElementById('notify-week').checked) notifyDays.push(7);
+
+    try {
+        await db
+            .collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('notifications')
+            .set(
+                {
+                    notifyDays: notifyDays,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                },
+                { merge: true }
+            );
+
+        alert('通知設定を保存しました！');
+    } catch (error) {
+        console.error('設定保存エラー:', error);
+        alert('保存に失敗しました: ' + error.message);
+    }
+}
+
+// テスト通知を送信
+async function sendTestNotification() {
+    const userId = getCurrentUserId();
+    if (!userId) return;
+
+    if (!confirm('テスト通知を送信しますか？')) return;
+
+    try {
+        // Cloud Functionのテストエンドポイントを呼び出す
+        const functionUrl = `https://asia-northeast1-task-sainou.cloudfunctions.net/testReminder?userId=${userId}`;
+
+        const response = await fetch(functionUrl);
+
+        if (response.ok) {
+            alert('テスト通知を送信しました！LINEを確認してください。');
+        } else {
+            throw new Error('通知送信に失敗しました');
+        }
+    } catch (error) {
+        console.error('テスト通知エラー:', error);
+        alert('テスト通知の送信に失敗しました: ' + error.message);
     }
 }
 

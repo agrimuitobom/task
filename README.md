@@ -31,6 +31,13 @@
 - 完了/未完了の管理
 - 期限順に自動ソート
 
+### 5. LINE通知機能 🔔
+- **毎日朝7時に自動チェック**
+- 期限が近いタスク・宿題をLINEで通知
+- 通知タイミングをカスタマイズ可能（当日、前日、1週間前）
+- テスト通知機能
+- 詳細は [LINE通知設定ガイド](LINE_NOTIFY_SETUP.md) を参照
+
 ## セットアップ
 
 ### 1. Firebaseプロジェクトの作成
@@ -105,6 +112,35 @@ firebase login
 ### 9. アプリケーションのデプロイ
 
 **重要**: デプロイは**あなたのローカル環境（パソコン）**で行ってください。
+
+#### Hostingのみデプロイ（初回）
+
+```bash
+firebase deploy --only hosting
+```
+
+#### LINE通知機能を使う場合（追加設定）
+
+1. **Blazeプランにアップグレード**（無料枠あり）
+   - [Firebase Console](https://console.firebase.google.com/project/task-sainou/usage/details)でアップグレード
+
+2. **Functionsの依存関係をインストール**
+   ```bash
+   cd functions
+   npm install
+   cd ..
+   ```
+
+3. **Cloud Functionsをデプロイ**
+   ```bash
+   firebase deploy --only functions
+   ```
+
+4. **LINE Notifyトークンを設定**
+   - アプリの「設定」タブでLINE Notifyトークンを登録
+   - 詳細は [LINE通知設定ガイド](LINE_NOTIFY_SETUP.md) を参照
+
+#### すべてデプロイ
 
 ```bash
 firebase deploy

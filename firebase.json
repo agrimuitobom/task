@@ -5,7 +5,8 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "README.md"
+      "README.md",
+      "functions/**"
     ],
     "rewrites": [
       {
@@ -24,5 +25,9 @@
         ]
       }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs18"
   }
 }
