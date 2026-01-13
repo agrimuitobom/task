@@ -4,8 +4,14 @@ const fetch = require('node-fetch');
 
 admin.initializeApp();
 
-// LINE Notify APIエンドポイント
-const LINE_NOTIFY_API = 'https://notify-api.line.me/api/notify';
+// LINE Messaging API エンドポイント
+const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message/push';
+
+// LINE Channel Access Token（環境変数から取得）
+// デプロイ時に設定: firebase functions:config:set line.channel_access_token="YOUR_CHANNEL_ACCESS_TOKEN"
+const getLineAccessToken = () => {
+  return functions.config().line?.channel_access_token || process.env.LINE_CHANNEL_ACCESS_TOKEN;
+};
 
 /**
  * 毎日朝7時に実行される定期タスク
@@ -42,7 +48,7 @@ async function checkAndNotifyUser(userId) {
   const db = admin.firestore();
 
   try {
-    // ユーザーのLINE Notifyトークンを取得
+    // ユーザーのLINE User IDを取得
     const settingsDoc = await db
       .collection('users')
       .doc(userId)
@@ -50,12 +56,12 @@ async function checkAndNotifyUser(userId) {
       .doc('notifications')
       .get();
 
-    if (!settingsDoc.exists || !settingsDoc.data().lineToken) {
-      console.log(`User ${userId}: No LINE token configured`);
+    if (!settingsDoc.exists || !settingsDoc.data().lineUserId) {
+      console.log(`User ${userId}: No LINE User ID configured`);
       return;
     }
 
-    const lineToken = settingsDoc.data().lineToken;
+    const lineUserId = settingsDoc.data().lineUserId;
     const notificationSettings = settingsDoc.data();
 
     // Todos取得
@@ -122,7 +128,7 @@ async function checkAndNotifyUser(userId) {
 
     // 通知を送信
     if (notifications.length > 0) {
-      await sendLineNotification(lineToken, notifications);
+      await sendLineMessage(lineUserId, notifications);
       console.log(`User ${userId}: Sent ${notifications.length} notifications`);
     } else {
       console.log(`User ${userId}: No notifications to send`);
@@ -145,38 +151,55 @@ function shouldNotify(daysUntil, settings) {
 }
 
 /**
- * LINE Notifyで通知を送信
+ * LINE Messaging APIでメッセージを送信
  */
-async function sendLineNotification(token, notifications) {
-  let message = '\n📚 タスク・宿題リマインダー\n';
+async function sendLineMessage(lineUserId, notifications) {
+  const accessToken = getLineAccessToken();
+
+  if (!accessToken) {
+    throw new Error('LINE Channel Access Token is not configured');
+  }
+
+  let messageText = '\n📚 タスク・宿題リマインダー\n';
 
   notifications.forEach(item => {
     const dayText = getDayText(item.daysUntil);
 
     if (item.type === 'タスク') {
-      message += `\n📝 ${item.text}\n期限: ${item.date} (${dayText})\n`;
+      messageText += `\n📝 ${item.text}\n期限: ${item.date} (${dayText})\n`;
     } else {
-      message += `\n📚 ${item.subject}: ${item.text}\n期限: ${item.date} (${dayText})\n`;
+      messageText += `\n📚 ${item.subject}: ${item.text}\n期限: ${item.date} (${dayText})\n`;
     }
   });
 
+  const payload = {
+    to: lineUserId,
+    messages: [
+      {
+        type: 'text',
+        text: messageText
+      }
+    ]
+  };
+
   try {
-    const response = await fetch(LINE_NOTIFY_API, {
+    const response = await fetch(LINE_MESSAGING_API, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
-      body: `message=${encodeURIComponent(message)}`,
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`LINE Notify error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`LINE Messaging API error: ${response.status} ${errorText}`);
     }
 
-    console.log('LINE notification sent successfully');
+    console.log('LINE message sent successfully');
   } catch (error) {
-    console.error('Failed to send LINE notification:', error);
+    console.error('Failed to send LINE message:', error);
     throw error;
   }
 }

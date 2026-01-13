@@ -34,9 +34,10 @@
 ### 5. LINE通知機能 🔔
 - **毎日朝7時に自動チェック**
 - 期限が近いタスク・宿題をLINEで通知
+- LINE Messaging API使用（LINE Notify終了に対応）
 - 通知タイミングをカスタマイズ可能（当日、前日、1週間前）
 - テスト通知機能
-- 詳細は [LINE通知設定ガイド](LINE_NOTIFY_SETUP.md) を参照
+- 詳細は [LINE Messaging API セットアップガイド](LINE_MESSAGING_SETUP.md) を参照
 
 ## セットアップ
 
@@ -124,21 +125,32 @@ firebase deploy --only hosting
 1. **Blazeプランにアップグレード**（無料枠あり）
    - [Firebase Console](https://console.firebase.google.com/project/task-sainou/usage/details)でアップグレード
 
-2. **Functionsの依存関係をインストール**
+2. **LINE Messaging APIチャネルを作成**
+   - [LINE Developers Console](https://developers.line.biz/console/)でチャネル作成
+   - Channel Access Tokenを取得
+   - 詳細は [LINE Messaging API セットアップガイド](LINE_MESSAGING_SETUP.md) を参照
+
+3. **Firebase環境変数を設定**
+   ```bash
+   firebase functions:config:set line.channel_access_token="YOUR_CHANNEL_ACCESS_TOKEN"
+   ```
+
+4. **Functionsの依存関係をインストール**
    ```bash
    cd functions
    npm install
    cd ..
    ```
 
-3. **Cloud Functionsをデプロイ**
+5. **Cloud Functionsをデプロイ**
    ```bash
    firebase deploy --only functions
    ```
 
-4. **LINE Notifyトークンを設定**
-   - アプリの「設定」タブでLINE Notifyトークンを登録
-   - 詳細は [LINE通知設定ガイド](LINE_NOTIFY_SETUP.md) を参照
+6. **LINE User IDを設定**
+   - LINE公式アカウントを友だち追加
+   - アプリの「設定」タブでLINE User IDを登録
+   - 詳細は [LINE Messaging API セットアップガイド](LINE_MESSAGING_SETUP.md) を参照
 
 #### すべてデプロイ
 

@@ -651,8 +651,8 @@ async function saveHomework() {
 function initSettings() {
     loadNotificationSettings();
 
-    // LINE トークン保存
-    document.getElementById('save-line-token-btn').addEventListener('click', saveLineToken);
+    // LINE User ID保存
+    document.getElementById('save-line-userid-btn').addEventListener('click', saveLineUserId);
 
     // 通知設定保存
     document.getElementById('save-notify-settings-btn').addEventListener('click', saveNotifySettings);
@@ -677,9 +677,9 @@ async function loadNotificationSettings() {
         if (settingsDoc.exists) {
             const settings = settingsDoc.data();
 
-            // トークンは表示しない（セキュリティ上）
-            if (settings.lineToken) {
-                document.getElementById('line-token-input').placeholder = '設定済み';
+            // User IDを表示
+            if (settings.lineUserId) {
+                document.getElementById('line-userid-input').value = settings.lineUserId;
             }
 
             // 通知タイミング
@@ -693,15 +693,21 @@ async function loadNotificationSettings() {
     }
 }
 
-// LINE トークンを保存
-async function saveLineToken() {
+// LINE User IDを保存
+async function saveLineUserId() {
     const userId = getCurrentUserId();
     if (!userId) return;
 
-    const token = document.getElementById('line-token-input').value.trim();
+    const lineUserId = document.getElementById('line-userid-input').value.trim();
 
-    if (!token) {
-        alert('トークンを入力してください');
+    if (!lineUserId) {
+        alert('LINE User IDを入力してください');
+        return;
+    }
+
+    // User ID形式チェック（U + 32文字の英数字）
+    if (!lineUserId.match(/^U[0-9a-f]{32}$/i)) {
+        alert('LINE User IDの形式が正しくありません。\n正しい形式: Uxxxxxxxxxx...（33文字）');
         return;
     }
 
@@ -713,17 +719,15 @@ async function saveLineToken() {
             .doc('notifications')
             .set(
                 {
-                    lineToken: token,
+                    lineUserId: lineUserId,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 },
                 { merge: true }
             );
 
-        alert('LINE Notifyトークンを保存しました！');
-        document.getElementById('line-token-input').value = '';
-        document.getElementById('line-token-input').placeholder = '設定済み';
+        alert('LINE User IDを保存しました！');
     } catch (error) {
-        console.error('トークン保存エラー:', error);
+        console.error('User ID保存エラー:', error);
         alert('保存に失敗しました: ' + error.message);
     }
 }
