@@ -235,3 +235,71 @@ exports.testReminder = functions
       res.status(500).send(`Error: ${error.message}`);
     }
   });
+
+/**
+ * User ID取得用Webhook（開発用）
+ * LINEユーザーがメッセージを送信すると、そのUser IDを自動返信する
+ */
+exports.lineWebhook = functions
+  .region('asia-northeast1')
+  .https.onRequest(async (req, res) => {
+    const events = req.body.events || [];
+
+    for (const event of events) {
+      if (event.type === 'message') {
+        const userId = event.source.userId;
+        console.log(`LINE User ID: ${userId}`);
+
+        // User IDを自動返信
+        try {
+          await sendLineMessageDirect(userId, `あなたのUser ID:\n${userId}\n\nこのIDをアプリの設定画面に入力してください。`);
+        } catch (error) {
+          console.error('Failed to send User ID:', error);
+        }
+      }
+    }
+
+    res.status(200).send('OK');
+  });
+
+/**
+ * LINE Messaging APIで単純なテキストメッセージを送信（Webhook用）
+ */
+async function sendLineMessageDirect(lineUserId, messageText) {
+  const accessToken = getLineAccessToken();
+
+  if (!accessToken) {
+    throw new Error('LINE Channel Access Token is not configured');
+  }
+
+  const payload = {
+    to: lineUserId,
+    messages: [
+      {
+        type: 'text',
+        text: messageText
+      }
+    ]
+  };
+
+  try {
+    const response = await fetch(LINE_MESSAGING_API, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`LINE Messaging API error: ${response.status} ${errorText}`);
+    }
+
+    console.log('LINE message sent successfully');
+  } catch (error) {
+    console.error('Failed to send LINE message:', error);
+    throw error;
+  }
+}
